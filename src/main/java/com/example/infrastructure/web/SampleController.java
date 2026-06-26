@@ -2,6 +2,7 @@ package com.example.infrastructure.web;
 
 import com.example.application.dto.request.SampleRequest;
 import com.example.application.dto.response.SampleResponse;
+import com.example.domain.exception.NotFoundException;
 import com.example.domain.port.inbound.SampleUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,9 +31,9 @@ public class SampleController {
 
     @GetMapping("/{id}")
     public ResponseEntity<SampleResponse> findById(@PathVariable UUID id) {
-        return sampleUseCase.findById(id)
-                .map(sample -> ResponseEntity.ok(new SampleResponse(sample.getId(), sample.getName(), sample.getCreatedAt())))
-                .orElse(ResponseEntity.notFound().build());
+        var sample = sampleUseCase.findById(id)
+                .orElseThrow(() -> new NotFoundException("Sample", id));
+        return ResponseEntity.ok(new SampleResponse(sample.getId(), sample.getName(), sample.getCreatedAt()));
     }
 
     @GetMapping
