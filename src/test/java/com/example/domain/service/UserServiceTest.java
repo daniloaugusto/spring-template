@@ -13,7 +13,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +33,7 @@ class UserServiceTest {
 
     @Test
     void register() {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("rawpass")).thenReturn("encoded");
         var saved = new User(UUID.randomUUID(), "testuser", "encoded", "ROLE_USER", null);
         when(userRepository.save(any())).thenReturn(saved);
@@ -42,6 +45,19 @@ class UserServiceTest {
         assertThat(result.getRole()).isEqualTo("ROLE_USER");
         verify(passwordEncoder).encode("rawpass");
         verify(userRepository).save(any());
+    }
+
+    @Test
+    void registerDuplicate() {
+        var existing = new User(UUID.randomUUID(), "testuser", "encoded", "ROLE_USER", null);
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> userService.register("testuser", "rawpass"))
+                .isInstanceOf(com.example.domain.exception.ConflictException.class)
+                .hasMessageContaining("already exists");
+
+        verify(passwordEncoder, never()).encode(any());
+        verify(userRepository, never()).save(any());
     }
 
     @Test

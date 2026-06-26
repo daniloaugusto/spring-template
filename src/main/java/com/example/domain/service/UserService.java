@@ -1,6 +1,6 @@
 package com.example.domain.service;
 
-import com.example.domain.exception.NotFoundException;
+import com.example.domain.exception.ConflictException;
 import com.example.domain.model.User;
 import com.example.domain.port.inbound.UserUseCase;
 import com.example.domain.port.outbound.UserRepository;
@@ -25,6 +25,9 @@ public class UserService implements UserUseCase {
 
     @Override
     public User register(String username, String password) {
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new ConflictException("Username '" + username + "' already exists");
+        }
         var encoded = passwordEncoder.encode(password);
         var user = new User(username, encoded, "ROLE_USER");
         return userRepository.save(user);

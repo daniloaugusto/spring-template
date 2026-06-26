@@ -17,11 +17,11 @@ class AuthIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void registerDuplicateReturnsError() {
+    void registerDuplicateReturnsConflict() {
         registerAndLogin("dupeuser", "password");
         var request = new RegisterRequest("dupeuser", "password");
         var response = rest.postForEntity("/api/auth/register", request, Void.class);
-        assertThat(response.getStatusCode().isError()).isTrue();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
