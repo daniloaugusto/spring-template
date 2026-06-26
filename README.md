@@ -277,6 +277,13 @@ The Docker host is auto-detected via `docker context inspect` — works with Doc
 # Start PostgreSQL
 docker compose -f infra/docker-compose.yml up -d
 
-# Stop and remove volume
+# Build and run the application container
+docker build -t spring-template .
+docker run -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=local \
+  --network host \
+  spring-template
+
+# Stop and remove volumes
 docker compose -f infra/docker-compose.yml down -v
 ```
