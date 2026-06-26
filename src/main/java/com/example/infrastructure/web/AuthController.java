@@ -1,14 +1,14 @@
 package com.example.infrastructure.web;
 
 import com.example.application.dto.request.LoginRequest;
+import com.example.application.dto.request.RegisterRequest;
 import com.example.application.dto.response.LoginResponse;
-import com.example.infrastructure.security.CustomUserDetailsService;
+import com.example.domain.port.inbound.UserUseCase;
 import com.example.infrastructure.security.JwtTokenProvider;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,17 +17,14 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
+    private final UserUseCase userUseCase;
 
     public AuthController(AuthenticationManager authenticationManager,
                           JwtTokenProvider jwtTokenProvider,
-                          CustomUserDetailsService userDetailsService,
-                          PasswordEncoder passwordEncoder) {
+                          UserUseCase userUseCase) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.userDetailsService = userDetailsService;
-        this.passwordEncoder = passwordEncoder;
+        this.userUseCase = userUseCase;
     }
 
     @PostMapping("/login")
@@ -40,9 +37,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody @Valid LoginRequest request) {
-        var encodedPassword = passwordEncoder.encode(request.password());
-        userDetailsService.createUser(request.username(), encodedPassword);
+    public ResponseEntity<Void> register(@RequestBody @Valid RegisterRequest request) {
+        userUseCase.register(request.username(), request.password());
         return ResponseEntity.ok().build();
     }
 }

@@ -1,6 +1,7 @@
 package com.example;
 
 import com.example.application.dto.request.LoginRequest;
+import com.example.application.dto.request.RegisterRequest;
 import com.example.application.dto.request.SampleRequest;
 import com.example.application.dto.response.LoginResponse;
 import com.example.application.dto.response.SampleResponse;
@@ -43,7 +44,7 @@ class FullIntegrationTest {
     }
 
     private void registerUser() {
-        var request = new LoginRequest("testuser", "testpass");
+        var request = new RegisterRequest("testuser", "testpass");
         var response = rest.postForEntity("/api/auth/register", request, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }

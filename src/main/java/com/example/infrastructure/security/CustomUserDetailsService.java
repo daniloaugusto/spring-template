@@ -1,36 +1,30 @@
 package com.example.infrastructure.security;
 
+import com.example.domain.port.outbound.UserRepository;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final Map<String, String> users = new ConcurrentHashMap<>();
+    private final UserRepository userRepository;
 
-    public CustomUserDetailsService() {
-        users.put("admin", "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy");
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if (!users.containsKey(username)) {
-            throw new UsernameNotFoundException("User not found: " + username);
-        }
-        return User.builder()
-                .username(username)
-                .password(users.get(username))
-                .roles("USER")
-                .build();
-    }
+        var user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-    public void createUser(String username, String encodedPassword) {
-        users.put(username, encodedPassword);
+        return User.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .roles(user.getRole().replace("ROLE_", ""))
+                .build();
     }
 }
