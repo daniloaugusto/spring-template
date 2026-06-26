@@ -6,4 +6,4 @@ spring:
 
 logging:
   level:
-    com.example: INFO
+    com.example: WARN
