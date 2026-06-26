@@ -6,7 +6,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SampleUseCase {
-    Sample create(String name);
-    Optional<Sample> findById(UUID id);
-    List<Sample> findAll();
+  Sample create(String name);
+
+  Optional<Sample> findById(UUID id);
+
+  List<Sample> findAll();
 }

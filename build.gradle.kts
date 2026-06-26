@@ -2,6 +2,9 @@ plugins {
     java
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
+    id("com.diffplug.spotless") version "7.0.3"
+    checkstyle
+    pmd
 }
 
 group = "com.example"
@@ -72,4 +75,28 @@ tasks.withType<Test> {
             }
         }
     }
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+        target("src/**/*.java")
+        targetExclude("**/build/**")
+    }
+}
+
+checkstyle {
+    configFile = rootProject.file("config/checkstyle/checkstyle.xml")
+    maxErrors = 0
+    maxWarnings = 0
+}
+
+pmd {
+    ruleSetFiles = files("config/pmd/ruleset.xml")
+    ruleSets = listOf()
+    toolVersion = "7.12.0"
+}
+
+tasks.check {
+    dependsOn("spotlessCheck")
 }

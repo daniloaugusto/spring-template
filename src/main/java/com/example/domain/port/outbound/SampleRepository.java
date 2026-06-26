@@ -6,7 +6,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SampleRepository {
-    Sample save(Sample sample);
-    Optional<Sample> findById(UUID id);
-    List<Sample> findAll();
+  Sample save(Sample sample);
+
+  Optional<Sample> findById(UUID id);
+
+  List<Sample> findAll();
 }
