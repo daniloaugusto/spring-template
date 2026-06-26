@@ -22,22 +22,22 @@ Spring Boot project template with hexagonal architecture, JWT authentication, an
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────┐
-│            Web Layer (Controller)             │
+┌────────────────────────────────────────────────┐
+│            Web Layer (Controller)              │
 │  infrastructure/web · infrastructure/security  │
-├──────────────────────────────────────────────┤
-│         Application Layer (DTOs)              │
-│          application/dto/request              │
-│          application/dto/response             │
-├──────────────────────────────────────────────┤
-│  Domain Layer (Model · Port · Service)        │
+├────────────────────────────────────────────────┤
+│         Application Layer (DTOs)               │
+│          application/dto/request               │
+│          application/dto/response              │
+├────────────────────────────────────────────────┤
+│  Domain Layer (Model · Port · Service)         │
 │  domain/model · domain/port · domain/service   │
-├──────────────────────────────────────────────┤
-│       Persistence Layer (JPA · Adapter)       │
-│   infrastructure/persistence/entity           │
-│   infrastructure/persistence/repository       │
-│   infrastructure/persistence/adapter          │
-└──────────────────────────────────────────────┘
+├────────────────────────────────────────────────┤
+│       Persistence Layer (JPA · Adapter)        │
+│   infrastructure/persistence/entity            │
+│   infrastructure/persistence/repository        │
+│   infrastructure/persistence/adapter           │
+└────────────────────────────────────────────────┘
 ```
 
 ### Request flow
