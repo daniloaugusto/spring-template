@@ -18,6 +18,9 @@ Spring Boot project template with hexagonal architecture, JWT authentication, an
 - **Spring Security + JWT** — stateless authentication (jjwt)
 - **Testcontainers** — real PostgreSQL for integration tests
 - **Springdoc OpenAPI** — Swagger UI at `/swagger-ui.html`
+- **Spring Boot Actuator** — health endpoint at `/actuator/health`
+- **Spotless** — Google Java Format (./gradlew spotlessApply)
+- **Checkstyle + PMD** — static analysis (./gradlew check)
 
 ---
 
@@ -217,11 +220,23 @@ src/test/java/com/example/
     ├── AuthIntegrationTest.java            Auth API tests (Testcontainers)
     └── SampleIntegrationTest.java          Sample CRUD API tests (Testcontainers)
 
+config/
+├── checkstyle/
+│   └── checkstyle.xml                      Checkstyle rules
+└── pmd/
+    └── ruleset.xml                         PMD rules
+
 infra/
 └── docker-compose.yml                      PostgreSQL 17
 
 scripts/
 └── rename-package.sh                       Package renamer
+
+.github/
+└── workflows/
+    └── ci.yml                              GitHub Actions CI
+
+Dockerfile                                   Multi-stage build
 ```
 
 ---
@@ -236,6 +251,7 @@ scripts/
 | `JWT_SECRET`               | (256-bit placeholder)            | HMAC-SHA384 signing key             |
 | `JWT_EXPIRATION`           | `86400000` (24h)                 | Token TTL in milliseconds           |
 | `PORT`                     | `8080`                           | HTTP server port                    |
+| `/actuator/health`         | —                                | Liveness probe (unauthenticated)    |
 
 ---
 
@@ -251,6 +267,11 @@ All tests use **Testcontainers** with a real PostgreSQL container. Docker is req
 ./gradlew test --info
 ```
 
+```bash
+# Run all code quality checks (formatting, style, static analysis)
+./gradlew check
+```
+
 | Test class                          | What it verifies                              |
 |-------------------------------------|-----------------------------------------------|
 | `AuthIntegrationTest`               | Register, duplicate user, wrong password      |
@@ -260,6 +281,8 @@ All tests use **Testcontainers** with a real PostgreSQL container. Docker is req
 
 The Docker host is auto-detected via `docker context inspect` — works with Docker Desktop, colima, and GitHub Actions without manual configuration.
 
+---
+
 ## CI
 
 On every push and pull request to `main`, GitHub Actions runs:
@@ -267,7 +290,7 @@ On every push and pull request to `main`, GitHub Actions runs:
 - **Spotless** — code formatting check
 - **Checkstyle** — style rules
 - **PMD** — static analysis
-- **All tests** with Testcontainers PostgreSQL (17 real containers)
+- **All tests** with Testcontainers PostgreSQL (single shared container)
 
 See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
@@ -281,6 +304,8 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 4. **Update Liquibase** — edit `db.changelog-master.yaml` with your tables
 5. **Update Docker Compose** — change database name/password in `infra/docker-compose.yml` to match your `application.yml`
 6. **Update the JWT secret** — generate a 256-bit key for production
+7. **Enable CI** — push to GitHub, the workflow in `.github/workflows/ci.yml` runs automatically
+8. **Set GitHub Secrets** — if deploying, add `JWT_SECRET`, `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` to your repository secrets
 
 ---
 
