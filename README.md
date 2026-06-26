@@ -1,5 +1,7 @@
 # Spring Template
 
+[![CI](https://github.com/daniloaugusto/spring-template/actions/workflows/ci.yml/badge.svg)](https://github.com/daniloaugusto/spring-template/actions/workflows/ci.yml)
+
 Spring Boot project template with hexagonal architecture, JWT authentication, and Liquibase migrations.
 
 **Java 21 · Spring Boot 3.4.4 · Gradle Kotlin DSL · PostgreSQL**
@@ -256,7 +258,18 @@ All tests use **Testcontainers** with a real PostgreSQL container. Docker is req
 | `SampleServiceTest`                 | Unit tests for sample service logic           |
 | `UserServiceTest`                   | Unit tests for user service logic             |
 
-The Docker host is auto-detected via `docker context inspect` — works with Docker Desktop and colima without manual configuration.
+The Docker host is auto-detected via `docker context inspect` — works with Docker Desktop, colima, and GitHub Actions without manual configuration.
+
+## CI
+
+On every push and pull request to `main`, GitHub Actions runs:
+
+- **Spotless** — code formatting check
+- **Checkstyle** — style rules
+- **PMD** — static analysis
+- **All tests** with Testcontainers PostgreSQL (17 real containers)
+
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
