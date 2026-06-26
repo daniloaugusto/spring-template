@@ -34,6 +34,10 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+  info:
+    title: Spring Template API
+    description: Spring Boot API with hexagonal architecture, JWT authentication, and Liquibase migrations
+    version: 0.0.1
 
 server:
   port: ${PORT:8080}
