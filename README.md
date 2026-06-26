@@ -61,13 +61,15 @@ Each layer depends only inward. The domain layer has no framework dependencies �
 
 ```bash
 # Start PostgreSQL
-docker compose -f infra/docker-compose up -d
+docker compose -f infra/docker-compose.yml up -d
 
 # Run the application
 SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ```
 
 Open [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+> CORS is configured to allow all origins (`*`). Restrict `CorsConfig.java` before deploying to production.
 
 ---
 
@@ -102,7 +104,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 # → 200 { "token": "eyJhbGciOiJIUzM4NCJ9..." }
 ```
 
-The default user `admin` / `password` is created on startup via `CustomUserDetailsService`. You can also register new users with `POST /api/auth/register`.
+Register new users with `POST /api/auth/register`, then use the credentials to log in and obtain a JWT token.
 
 ### Samples (authenticated)
 
@@ -139,30 +141,41 @@ src/main/java/com/example/
 ├── application/dto/
 │   ├── request/                            Input DTOs (Java records)
 │   │   ├── LoginRequest.java
+│   │   ├── RegisterRequest.java
 │   │   └── SampleRequest.java
 │   └── response/                           Output DTOs (Java records)
 │       ├── LoginResponse.java
-│       └── SampleResponse.java
+│       ├── SampleResponse.java
+│       └── UserResponse.java
 │
 ├── domain/
+│   ├── exception/                          Domain exceptions
+│   │   └── NotFoundException.java
 │   ├── model/                              Domain models (plain Java)
-│   │   └── Sample.java
+│   │   ├── Sample.java
+│   │   └── User.java
 │   ├── port/
 │   │   ├── inbound/                        Use case interfaces
-│   │   │   └── SampleUseCase.java
+│   │   │   ├── SampleUseCase.java
+│   │   │   └── UserUseCase.java
 │   │   └── outbound/                       Repository interfaces
-│   │       └── SampleRepository.java
+│   │       ├── SampleRepository.java
+│   │       └── UserRepository.java
 │   └── service/                            Business logic
-│       └── SampleService.java
+│       ├── SampleService.java
+│       └── UserService.java
 │
 ├── infrastructure/
 │   ├── persistence/
 │   │   ├── entity/                         JPA entities
-│   │   │   └── SampleEntity.java
+│   │   │   ├── SampleEntity.java
+│   │   │   └── UserEntity.java
 │   │   ├── repository/                     Spring Data JPA repos
-│   │   │   └── SampleJpaRepository.java
+│   │   │   ├── SampleJpaRepository.java
+│   │   │   └── UserJpaRepository.java
 │   │   └── adapter/                        Port → JPA adapter
-│   │       └── SampleRepositoryAdapter.java
+│   │       ├── SampleRepositoryAdapter.java
+│   │       └── UserRepositoryAdapter.java
 │   ├── security/
 │   │   ├── SecurityConfig.java             Spring Security configuration
 │   │   ├── JwtTokenProvider.java           Token generation/validation
@@ -170,12 +183,19 @@ src/main/java/com/example/
 │   │   └── CustomUserDetailsService.java   User lookup
 │   └── web/
 │       ├── SampleController.java           REST CRUD endpoints
-│       └── AuthController.java             Login/register endpoints
+│       ├── AuthController.java             Login/register endpoints
+│       ├── ErrorResponse.java              Error DTO
+│       └── GlobalExceptionHandler.java     @RestControllerAdvice
 │
 └── shared/
-    └── config/                             Shared configuration
-        ├── CorsConfig.java
-        └── JacksonConfig.java
+    ├── config/                             Shared configuration
+    │   ├── CorsConfig.java
+    │   └── JacksonConfig.java
+    └── mapper/                             Domain ↔ DTO / Domain ↔ Entity
+        ├── SampleMapper.java
+        ├── SampleEntityMapper.java
+        ├── UserMapper.java
+        └── UserEntityMapper.java
 
 src/main/resources/
 ├── application.yml                         Base config (PostgreSQL, JWT)
@@ -186,11 +206,20 @@ src/main/resources/
     └── db.changelog-master.yaml            Liquibase migrations
 
 src/test/java/com/example/
-├── SpringTemplateApplicationTests.java     Context load test
-└── FullIntegrationTest.java                End-to-end API test
+├── BaseIntegrationTest.java                Shared container + auth helpers
+├── TestContainersConfig.java               Singleton PostgreSQL container
+├── domain/service/
+│   ├── SampleServiceTest.java              Unit tests (Mockito)
+│   └── UserServiceTest.java                Unit tests (Mockito)
+└── infrastructure/web/
+    ├── AuthIntegrationTest.java            Auth API tests (Testcontainers)
+    └── SampleIntegrationTest.java          Sample CRUD API tests (Testcontainers)
 
 infra/
 └── docker-compose.yml                      PostgreSQL 17
+
+scripts/
+└── rename-package.sh                       Package renamer
 ```
 
 ---
@@ -222,8 +251,10 @@ All tests use **Testcontainers** with a real PostgreSQL container. Docker is req
 
 | Test class                          | What it verifies                              |
 |-------------------------------------|-----------------------------------------------|
-| `SpringTemplateApplicationTests`    | Application context loads with PostgreSQL     |
-| `FullIntegrationTest`               | Auth + CRUD full HTTP flow (real endpoints)   |
+| `AuthIntegrationTest`               | Register, duplicate user, wrong password      |
+| `SampleIntegrationTest`             | CRUD samples, 404 not found                   |
+| `SampleServiceTest`                 | Unit tests for sample service logic           |
+| `UserServiceTest`                   | Unit tests for user service logic             |
 
 The Docker host is auto-detected via `docker context inspect` — works with Docker Desktop and colima without manual configuration.
 
@@ -231,7 +262,7 @@ The Docker host is auto-detected via `docker context inspect` — works with Doc
 
 ## Using as a template
 
-1. **Rename the package** — replace `com.example` with your domain package
+1. **Rename the package** — `./scripts/rename-package.sh com.yourcompany` (or manually replace `com.example`)
 2. **Rename the project** — update `settings.gradle.kts` (`rootProject.name`)
 3. **Replace the Sample domain** — delete `Sample.java`, `SampleEntity.java`, `SampleService.java`, etc., and add your own
 4. **Update Liquibase** — edit `db.changelog-master.yaml` with your tables
@@ -244,8 +275,8 @@ The Docker host is auto-detected via `docker context inspect` — works with Doc
 
 ```bash
 # Start PostgreSQL
-docker compose -f infra/docker-compose up -d
+docker compose -f infra/docker-compose.yml up -d
 
 # Stop and remove volume
-docker compose -f infra/docker-compose down -v
+docker compose -f infra/docker-compose.yml down -v
 ```
