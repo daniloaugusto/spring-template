@@ -17,6 +17,12 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("org.testcontainers:testcontainers-bom:1.21.4")
+    }
+}
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -37,8 +43,32 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:junit-jupiter")
+}
+
+fun getDockerHost(): String {
+    return try {
+        val process = ProcessBuilder("docker", "context", "inspect",
+            "--format", "{{.Endpoints.docker.Host}}")
+            .redirectErrorStream(true)
+            .start()
+        process.inputStream.bufferedReader().readText().trim()
+    } catch (_: Exception) {
+        ""
+    }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    doFirst {
+        val dockerHost = getDockerHost()
+        if (dockerHost.isNotEmpty()) {
+            environment("DOCKER_HOST", dockerHost)
+            if (dockerHost.contains(".colima")) {
+                environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
+            }
+        }
+    }
 }
